@@ -1,0 +1,6 @@
+# Public Home Assistant add-on repository for Aria. Contains ONLY the add-on
+# manifest (no source) — Aria itself ships as a prebuilt image pulled from GHCR.
+# Add this repo's URL in Home Assistant → Apps → App store → ⋮ → Repositories.
+name: Aria
+url: https://github.com/alexfsawaya-dot/aria-addon
+maintainer: Alex Sawaya <alex.f.sawaya@gmail.com>
