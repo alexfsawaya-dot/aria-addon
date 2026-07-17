@@ -3,7 +3,7 @@
 # The image is built off-device by the aria-web repo's GitHub Action. Bump `version`
 # in lockstep with the pushed image tag.
 name: Aria
-version: "0.1.0"
+version: "0.1.1"
 slug: aria
 description: The Aria smart-home dashboard — runs alongside Home Assistant and talks to it locally.
 url: https://github.com/alexfsawaya-dot/aria-addon
