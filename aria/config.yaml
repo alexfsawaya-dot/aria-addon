@@ -1,36 +1,51 @@
-# Aria add-on manifest. PREBUILT image — the Supervisor pulls
-# ghcr.io/alexfsawaya-dot/aria:<version> for the hub's arch (never builds on-device).
-# The image is built off-device by the aria-web repo's GitHub Action. Bump `version`
-# in lockstep with the pushed image tag.
+# Canonical Home Assistant add-on manifest for Aria. A release copies this exact
+# file FROM THE VERSION TAG to the public aria-addon repo only after the matching
+# multi-arch image exists; the release stays red until public and tagged copies
+# are byte-identical. The Supervisor pulls image:<version>, never builds on-device.
 name: Aria
-version: "0.1.1"
+version: "0.1.3"
 slug: aria
 description: The Aria smart-home dashboard — runs alongside Home Assistant and talks to it locally.
 url: https://github.com/alexfsawaya-dot/aria-addon
+# Multi-arch manifest at one tag: the Green pulls arm64, an N100/dev box amd64.
 arch:
   - aarch64
   - amd64
 image: ghcr.io/alexfsawaya-dot/aria
+# We provide our own entrypoint (node), so skip the HA init shim.
 init: false
+# Auto-start on boot / after power loss, and auto-restart if the port dies.
 boot: auto
 startup: application
 watchdog: "tcp://[HOST]:[PORT:3000]"
+# Expose Aria on the host so the Cloudflared add-on (Stage 4) can reach it at
+# http://<green-ip>:3000. Deliberately NOT ingress (breaks Next asset paths and
+# puts HA's login in front — docs/runtime-spike-findings.md).
 ports:
   "3000/tcp": 3000
 ports_description:
   "3000/tcp": Aria web interface
+# Lets the add-on reach Core locally via http://supervisor/core with the injected
+# SUPERVISOR_TOKEN (entrypoint.sh wires this) — no long-lived token to manage.
 homeassistant_api: true
 hassio_api: false
 host_network: false
+# Installer-facing options. setup_code unlocks first-run household creation
+# (docs/auth-plan.md). wifi_* feed Matter commissioning. ha_url/ha_token are an
+# escape hatch for an off-box Home Assistant (leave blank to use the Supervisor).
+# trust_forwarded_headers: leave OFF unless a trusted HTTPS proxy (the Cloudflare
+# Tunnel — Stage 4) fronts Aria; ON makes Aria trust x-forwarded-proto/-for.
 options:
   setup_code: ""
   wifi_ssid: ""
   wifi_password: ""
   ha_url: ""
   ha_token: ""
+  trust_forwarded_headers: false
 schema:
   setup_code: "str?"
   wifi_ssid: "str?"
   wifi_password: "password?"
   ha_url: "str?"
   ha_token: "password?"
+  trust_forwarded_headers: "bool?"
