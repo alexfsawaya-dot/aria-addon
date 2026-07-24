@@ -3,7 +3,7 @@
 # multi-arch image exists; the release stays red until public and tagged copies
 # are byte-identical. The Supervisor pulls image:<version>, never builds on-device.
 name: Aria
-version: "0.1.4"
+version: "0.1.5"
 slug: aria
 description: The Aria smart-home dashboard — runs alongside Home Assistant and talks to it locally.
 url: https://github.com/alexfsawaya-dot/aria-addon
@@ -11,7 +11,9 @@ url: https://github.com/alexfsawaya-dot/aria-addon
 arch:
   - aarch64
   - amd64
-image: ghcr.io/alexfsawaya-dot/aria
+# Private from 0.1.5 onward. Each authorized Supervisor stores its own
+# read-only ghcr.io credential; no registry token belongs in this manifest.
+image: ghcr.io/alexfsawaya-dot/aria-runtime
 # We provide our own entrypoint (node), so skip the HA init shim.
 init: false
 # Auto-start on boot / after power loss, and auto-restart if the port dies.
