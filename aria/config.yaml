@@ -3,7 +3,7 @@
 # multi-arch image exists; the release stays red until public and tagged copies
 # are byte-identical. The Supervisor pulls image:<version>, never builds on-device.
 name: Aria
-version: "0.1.5"
+version: "0.1.6"
 slug: aria
 description: The Aria smart-home dashboard — runs alongside Home Assistant and talks to it locally.
 url: https://github.com/alexfsawaya-dot/aria-addon
@@ -16,10 +16,18 @@ arch:
 image: ghcr.io/alexfsawaya-dot/aria-runtime
 # We provide our own entrypoint (node), so skip the HA init shim.
 init: false
-# Auto-start on boot / after power loss, and auto-restart if the port dies.
+# Auto-start on boot / after power loss. The HTTP watchdog distinguishes a
+# responsive degraded process from a genuinely unhealthy runtime.
 boot: auto
 startup: application
-watchdog: "tcp://[HOST]:[PORT:3000]"
+watchdog: "http://[HOST]:[PORT:3000]/api/health"
+# Keep hot-backup behavior explicit while omitting abandoned atomic-write
+# scratch files. Canonical auth, household, stable-identity, Modes, and pilot-evidence records
+# are still included. The .tmp suffix is reserved for disposable scratch data
+# anywhere under /data and is the manifest's only exclusion.
+backup: hot
+backup_exclude:
+  - "*.tmp"
 # Expose Aria on the host so the Cloudflared add-on (Stage 4) can reach it at
 # http://<green-ip>:3000. Deliberately NOT ingress (breaks Next asset paths and
 # puts HA's login in front — docs/runtime-spike-findings.md).
@@ -32,11 +40,22 @@ ports_description:
 homeassistant_api: true
 hassio_api: false
 host_network: false
-# Installer-facing options. setup_code unlocks first-run household creation
-# (docs/auth-plan.md). wifi_* feed Matter commissioning. ha_url/ha_token are an
-# escape hatch for an off-box Home Assistant (leave blank to use the Supervisor).
+# Installer-facing options. setup_code unlocks first-run household creation and
+# signs the short-lived installer capability (docs/auth-plan.md). Keep it set for
+# the life of the home: at least 12 characters, at least 8 distinct characters,
+# no leading/trailing space, and never the documented placeholder. wifi_* feed
+# Matter commissioning. ha_url/ha_token are an escape hatch for an off-box Home
+# Assistant (leave blank to use the Supervisor).
 # trust_forwarded_headers: leave OFF unless a trusted HTTPS proxy (the Cloudflare
 # Tunnel — Stage 4) fronts Aria; ON makes Aria trust x-forwarded-proto/-for.
+# pilot_evidence: explicit private-pilot opt-in for bounded, local-only
+# commissioning/control evidence under /data/pilot-evidence. It defaults OFF,
+# uploads nothing, and is not needed for ordinary operation.
+# stable_device_identity: explicit opt-in that starts the server-only stable
+# device identity capture lifecycle at boot. It defaults OFF; when ON it reads
+# the Home Assistant device/entity registries over the connection Aria already
+# holds and writes only the local /data identity sidecar. It changes no Home
+# Assistant object and no existing Aria reference — docs/device-identity.md.
 options:
   setup_code: ""
   wifi_ssid: ""
@@ -44,10 +63,16 @@ options:
   ha_url: ""
   ha_token: ""
   trust_forwarded_headers: false
+  pilot_evidence: false
+  stable_device_identity: false
+  routine_owner_mode: "enforce"
 schema:
-  setup_code: "str?"
+  setup_code: "password?"
   wifi_ssid: "str?"
   wifi_password: "password?"
   ha_url: "str?"
   ha_token: "password?"
   trust_forwarded_headers: "bool?"
+  pilot_evidence: "bool?"
+  stable_device_identity: "bool?"
+  routine_owner_mode: "list(off|observe|enforce)?"
