@@ -3,7 +3,7 @@
 # multi-arch image exists; the release stays red until public and tagged copies
 # are byte-identical. The Supervisor pulls image:<version>, never builds on-device.
 name: Aria
-version: "0.1.6"
+version: "0.1.7"
 slug: aria
 description: The Aria smart-home dashboard — runs alongside Home Assistant and talks to it locally.
 url: https://github.com/alexfsawaya-dot/aria-addon
